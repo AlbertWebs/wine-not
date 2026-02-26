@@ -1,0 +1,47 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Wine & spirits theme */
+    --color-wine-950: #2d0f14;
+    --color-wine-900: #4a1c24;
+    --color-wine-800: #5c2a30;
+    --color-wine-700: #722f37;
+    --color-wine-600: #8b3a42;
+    --color-wine-500: #a04550;
+    --color-wine-400: #b86b75;
+    --color-wine-300: #d4a0a8;
+    --color-wine-200: #e8ccd0;
+    --color-wine-100: #f5e6e9;
+    --color-wine-50: #faf5f6;
+
+    --color-gold-600: #b8860b;
+    --color-gold-500: #c9a227;
+    --color-gold-400: #d4af37;
+    --color-gold-300: #e5c76b;
+    --color-gold-200: #f0dea8;
+    --color-gold-100: #f7edce;
+
+    --color-cream: #faf7f2;
+    --color-cream-dark: #f5f0e8;
+}
+
+/* Wine Not – primary action buttons (use with text-white) */
+.btn-wine {
+    background-color: var(--color-wine-600);
+}
+.btn-wine:hover {
+    background-color: var(--color-wine-700);
+}
+
+/* Alpine.js x-cloak - Hide elements until Alpine.js loads */
+[x-cloak] {
+    display: none !important;
+}
