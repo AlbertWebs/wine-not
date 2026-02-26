@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('etims_uuid')->nullable()->after('etims_invoice_number');
             $table->datetime('etims_approval_date')->nullable()->after('etims_uuid');
             $table->boolean('etims_verified')->default(false)->after('etims_approval_date');
-            
+
             $table->index('etims_invoice_number');
             $table->index('etims_verified');
         });
@@ -36,4 +36,3 @@ return new class extends Migration
         });
     }
 };
-
