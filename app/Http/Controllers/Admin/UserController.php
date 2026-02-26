@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
@@ -32,7 +31,7 @@ class UserController extends Controller
         ]);
 
         $user = User::findOrFail($id);
-        $user->pin = Hash::make($request->new_pin);
+        $user->pin = $request->new_pin; // Model Hashed cast will hash it
         $user->resetLoginAttempts(); // Also reset login attempts when PIN is reset
         $user->save();
 
@@ -77,7 +76,7 @@ class UserController extends Controller
         $user = User::create([
             'name' => $request->name,
             'username' => $request->username,
-            'pin' => Hash::make($request->pin),
+            'pin' => $request->pin, // Model Hashed cast will hash it
             'role' => $request->role,
             'status' => $request->status,
             'login_attempts' => 0,
@@ -115,19 +114,15 @@ class UserController extends Controller
 
         // Only update PIN if provided
         if ($request->filled('pin')) {
-            $user->pin = Hash::make($request->pin);
+            $user->pin = $request->pin; // Model Hashed cast will hash it
         }
 
         $user->save();
 
-        // Update role using Spatie if available
+        // Update role using Spatie
         if (method_exists($user, 'syncRoles')) {
             $user->syncRoles([$request->role]);
         } elseif (method_exists($user, 'assignRole')) {
-            // Remove old roles and assign new one
-            if (method_exists($user, 'removeRole')) {
-                $user->removeRole($user->role);
-            }
             $user->assignRole($request->role);
         }
 
