@@ -23,7 +23,7 @@ class UserSeeder extends Seeder
             ['username' => 'admin'],
             [
                 'name' => 'Wine Not Admin',
-                'pin' => Hash::make('1234'),
+                'pin' => Hash::make('2624'),
                 'role' => 'super_admin',
                 'status' => 'active',
             ]
