@@ -4,14 +4,13 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 
 /**
  * Wine Not POS – default users.
  *
  * Default credentials (change in production):
- *   Admin:  username `admin`  PIN `1234`
+ *   Admin:  username `admin`  PIN `2624`
  *   Cashier: username `cashier` PIN `5678`
  */
 class UserSeeder extends Seeder
@@ -25,7 +24,7 @@ class UserSeeder extends Seeder
             ['username' => 'admin'],
             [
                 'name' => 'Wine Not Admin',
-                'pin' => Hash::make('2624'),
+                'pin' => '2624', // Model Hashed cast hashes it
                 'role' => 'super_admin',
                 'status' => 'active',
             ]
@@ -37,7 +36,7 @@ class UserSeeder extends Seeder
             ['username' => 'cashier'],
             [
                 'name' => 'Wine Not Cashier',
-                'pin' => Hash::make('5678'),
+                'pin' => '5678', // Model Hashed cast hashes it
                 'role' => 'cashier',
                 'status' => 'active',
             ]
