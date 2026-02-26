@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
+/** Wine Not POS – switch users to username + PIN auth. */
 return new class extends Migration
 {
     /**

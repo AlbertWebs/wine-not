@@ -261,7 +261,7 @@ class InventoryImport implements ToCollection, WithHeadingRow
             return null;
         }
 
-        $normalized = preg_replace('/[\s,\u{00A0}\u{200B}\u{200C}\u{200D}\u{FEFF}]/u', '', $stringValue);
+        $normalized = preg_replace('/[\s,\x{00A0}\x{200B}\x{200C}\x{200D}\x{FEFF}]/u', '', $stringValue);
         $normalized = str_replace(',', '.', $normalized);
         if (is_numeric($normalized)) {
             return (int) round((float) $normalized);

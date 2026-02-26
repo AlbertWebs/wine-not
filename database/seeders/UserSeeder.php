@@ -7,28 +7,35 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 
+/**
+ * Wine Not POS – default users.
+ *
+ * Default credentials (change in production):
+ *   Admin:  username `admin`  PIN `1234`
+ *   Cashier: username `cashier` PIN `5678`
+ */
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // Create Super Admin
-        $superAdmin = User::firstOrCreate(
+        // Wine Not Admin (full access)
+        $admin = User::firstOrCreate(
             ['username' => 'admin'],
             [
-                'name' => 'Super Admin',
-                'pin' => Hash::make('8945'), // PIN: 1234
+                'name' => 'Wine Not Admin',
+                'pin' => Hash::make('1234'),
                 'role' => 'super_admin',
                 'status' => 'active',
             ]
         );
-        $superAdmin->assignRole('super_admin');
+        $admin->assignRole('super_admin');
 
-        // Create Cashier
+        // Wine Not Cashier (till, sales, customers, inventory view/edit)
         $cashier = User::firstOrCreate(
             ['username' => 'cashier'],
             [
-                'name' => 'Cashier',
-                'pin' => Hash::make('5678'), // PIN: 5678
+                'name' => 'Wine Not Cashier',
+                'pin' => Hash::make('5678'),
                 'role' => 'cashier',
                 'status' => 'active',
             ]

@@ -4,6 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/** Wine Not POS – brands (wine/spirits producers or distributors). */
 return new class extends Migration
 {
     public function up(): void

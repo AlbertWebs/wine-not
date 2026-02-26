@@ -5,6 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
+/** Wine Not POS – sales date → datetime. */
 return new class extends Migration
 {
     /**

@@ -5,6 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
+/** Wine Not POS – payments payment_method enum update. */
 return new class extends Migration
 {
     /**

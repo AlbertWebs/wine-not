@@ -5,6 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
+/** Wine Not POS – refactor: remove vehicle/work-order, add wine/spirits fields. */
 return new class extends Migration
 {
     public function up(): void
