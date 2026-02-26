@@ -169,7 +169,7 @@
             @if($sale->customer)
             <p class="text-xs text-gray-500 mt-1">Loyalty Points: {{ number_format($sale->customer->loyalty_points) }}</p>
             @endif
-            <p class="text-xs text-gray-400 mt-2">Powered By Designekta Studios</p>
+            <p class="text-xs text-gray-400 mt-2">System Powered By Designekta Studios</p>
         </div>
     </div>
 

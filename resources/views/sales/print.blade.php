@@ -409,6 +409,7 @@
                 @if($sale->customer)
                 <p style="margin-top: 2px;">Loyalty Points: {{ number_format($sale->customer->loyalty_points) }}</p>
                 @endif
+                <p style="margin-top: 4px; font-size: 9px; color: #666;">System Powered By Designekta Studios</p>
             </div>
         </div>
     </div>
