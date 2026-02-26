@@ -33,6 +33,14 @@ Route::get('/order-confirmation/{id}', function($id) {
     return redirect()->route('ecommerce.order-confirmation', $id);
 });
 
+// Root URL (e.g. https://pos.winenot.co.ke/) – require login
+Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('pos.index');
+    }
+    return redirect()->route('login');
+})->name('home');
+
 // Authentication Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -176,22 +184,4 @@ Route::middleware('auth')->group(function () {
         
     });
     
-    // Redirect root to POS for authenticated users
-    Route::get('/', function () {
-        return redirect()->route('pos.index');
-    });
 });
-
-// Root route - redirect to shop or POS (if authenticated)
-Route::get('/', function () {
-    // Check if we're on the main domain (not pos subdomain)
-    // For localhost, we'll redirect to shop
-    if (request()->getHost() === 'localhost' || request()->getHost() === '127.0.0.1' || !str_contains(request()->getHost(), 'pos.')) {
-        return redirect()->route('ecommerce.index');
-    }
-    // If on pos subdomain or authenticated, go to POS
-    if (auth()->check()) {
-        return redirect()->route('pos.index');
-    }
-    return redirect()->route('login');
-})->middleware('guest');
