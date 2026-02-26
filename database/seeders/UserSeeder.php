@@ -18,6 +18,8 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(RolePermissionSeeder::class);
+
         // Wine Not Admin (full access)
         $admin = User::firstOrCreate(
             ['username' => 'admin'],
