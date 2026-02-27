@@ -150,7 +150,7 @@ class InventoryImport implements ToCollection, WithHeadingRow
         if ($costPrice !== null) {
             $attributes['cost_price'] = $costPrice;
         } elseif ($isNew) {
-            throw new \RuntimeException('cost_price or Stockist Pricelist is required for new inventory items.');
+            $attributes['cost_price'] = 0;
         }
 
         $sellingPrice = $this->parseDecimal(
@@ -159,10 +159,8 @@ class InventoryImport implements ToCollection, WithHeadingRow
         );
         if ($sellingPrice !== null) {
             $attributes['selling_price'] = $sellingPrice;
-        } elseif ($isNew && $costPrice !== null) {
-            $attributes['selling_price'] = $costPrice;
         } elseif ($isNew) {
-            throw new \RuntimeException('selling_price or Recommended resale is required for new inventory items.');
+            $attributes['selling_price'] = $costPrice ?? 0;
         }
 
         $minPrice = $this->parseDecimal($row['min_price'] ?? null, 'min_price');
@@ -177,12 +175,16 @@ class InventoryImport implements ToCollection, WithHeadingRow
             $attributes['min_price'] = $sellingPrice ?? $costPrice ?? 0;
         }
 
-        $stockQuantity = $this->parseInteger(
-            $row['stock_quantity'] ?? $row['qty'] ?? $this->findColumnValue($row, ['qty', 'quantity', 'stock']),
-            'stock_quantity'
-        );
+        try {
+            $stockQuantity = $this->parseInteger(
+                $row['stock_quantity'] ?? $row['qty'] ?? $this->findColumnValue($row, ['qty', 'quantity', 'stock']),
+                'stock_quantity'
+            );
+        } catch (\Throwable $e) {
+            $stockQuantity = $isNew ? 0 : null;
+        }
         if ($stockQuantity !== null) {
-            $attributes['stock_quantity'] = $stockQuantity;
+            $attributes['stock_quantity'] = (int) $stockQuantity;
         } elseif ($isNew) {
             $attributes['stock_quantity'] = 0;
         }
