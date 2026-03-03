@@ -169,6 +169,137 @@ class SaleController extends Controller
         }
     }
 
+    public function edit(Sale $sale)
+    {
+        $sale->load(['customer', 'saleItems.part']);
+        $customers = \App\Models\Customer::orderBy('name')->get();
+        $inventory = Inventory::where('status', 'active')->orderBy('name')->get(['id', 'name', 'part_number', 'selling_price', 'stock_quantity', 'min_price']);
+        $editItems = $sale->saleItems->map(fn($i) => [
+            'part_id' => $i->part_id,
+            'quantity' => $i->quantity,
+            'price' => (float) $i->price,
+            'part' => $i->part,
+        ])->values()->all();
+        $inventoryJson = $inventory->map(fn($i) => [
+            'id' => $i->id,
+            'name' => $i->name,
+            'part_number' => $i->part_number,
+            'selling_price' => (float) $i->selling_price,
+            'min_price' => (float) $i->min_price,
+        ])->values()->all();
+        return view('sales.edit', compact('sale', 'customers', 'inventory', 'inventoryJson', 'editItems'));
+    }
+
+    public function update(Request $request, Sale $sale)
+    {
+        $validated = $request->validate([
+            'customer_id' => 'nullable|exists:customers,id',
+            'items' => 'required|array|min:1',
+            'items.*.part_id' => 'required|exists:inventory,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.price' => 'required|numeric|min:0',
+            'tax' => 'nullable|numeric|min:0',
+            'discount' => 'nullable|numeric|min:0',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $oldItems = $sale->saleItems()->with('part')->get();
+            $oldTotal = (float) $sale->total_amount;
+            $customerId = $sale->customer_id;
+
+            // 1. Restore inventory for existing sale items and delete them
+            foreach ($oldItems as $oldItem) {
+                $part = $oldItem->part;
+                if ($part) {
+                    $part->increment('stock_quantity', $oldItem->quantity);
+                    InventoryMovement::create([
+                        'part_id' => $part->id,
+                        'change_quantity' => $oldItem->quantity,
+                        'movement_type' => 'adjust',
+                        'reference_id' => $sale->id,
+                        'reference_type' => Sale::class,
+                        'user_id' => Auth::id(),
+                        'notes' => 'Sale edit: reverted from sale ' . $sale->invoice_number,
+                        'timestamp' => now(),
+                    ]);
+                }
+            }
+            $sale->saleItems()->delete();
+
+            // 2. Reverse loyalty points for old total
+            if ($customerId && $oldTotal > 0) {
+                $pointsToRemove = floor($oldTotal / 100);
+                if ($pointsToRemove > 0) {
+                    \App\Models\Customer::where('id', $customerId)->decrement('loyalty_points', $pointsToRemove);
+                }
+            }
+
+            // 3. Create new sale items and deduct inventory
+            $subtotal = 0;
+            foreach ($validated['items'] as $item) {
+                $inventory = Inventory::findOrFail($item['part_id']);
+                if ($inventory->stock_quantity < $item['quantity']) {
+                    throw new \Exception("Insufficient stock for {$inventory->name}");
+                }
+                if ($item['price'] < $inventory->min_price) {
+                    throw new \Exception("Price below minimum for {$inventory->name}");
+                }
+                $lineSubtotal = $item['quantity'] * $item['price'];
+                $subtotal += $lineSubtotal;
+                SaleItem::create([
+                    'sale_id' => $sale->id,
+                    'part_id' => $item['part_id'],
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price'],
+                    'subtotal' => $lineSubtotal,
+                ]);
+                $inventory->decrement('stock_quantity', $item['quantity']);
+                InventoryMovement::create([
+                    'part_id' => $item['part_id'],
+                    'change_quantity' => -$item['quantity'],
+                    'movement_type' => 'sale',
+                    'reference_id' => $sale->id,
+                    'user_id' => Auth::id(),
+                    'timestamp' => now(),
+                ]);
+            }
+
+            $tax = (float) ($validated['tax'] ?? 0);
+            $discount = (float) ($validated['discount'] ?? 0);
+            $totalAmount = round($subtotal + $tax - $discount, 2);
+
+            $sale->update([
+                'customer_id' => $validated['customer_id'] ?? null,
+                'subtotal' => round($subtotal, 2),
+                'tax' => $tax,
+                'discount' => $discount,
+                'total_amount' => $totalAmount,
+            ]);
+
+            // 4. Update primary payment amount if single payment
+            $payments = $sale->payments;
+            if ($payments->count() === 1) {
+                $payments->first()->update(['amount' => $totalAmount]);
+            }
+
+            // 5. Re-award loyalty points for new total
+            $newCustomerId = $validated['customer_id'] ?? null;
+            if ($newCustomerId && $totalAmount > 0) {
+                $points = floor($totalAmount / 100);
+                if ($points > 0) {
+                    \App\Models\Customer::where('id', $newCustomerId)->increment('loyalty_points', $points);
+                }
+            }
+
+            DB::commit();
+            return redirect()->route('sales.show', $sale)->with('success', 'Sale updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
+        }
+    }
+
     public function show(Sale $sale, Request $request)
     {
         $sale->load(['customer', 'user', 'saleItems.part', 'payments']);

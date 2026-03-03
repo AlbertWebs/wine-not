@@ -12,12 +12,12 @@
         </div>
         <div class="flex gap-3">
             @if($lowStockCount > 0)
-            <div class="bg-red-50 border border-red-200 rounded-lg px-4 py-2 flex items-center gap-2">
+            <a href="{{ route('inventory.index', array_merge(request()->query(), ['low_stock' => '1'])) }}" class="bg-red-50 border border-red-200 rounded-lg px-4 py-2 flex items-center gap-2 hover:bg-red-100 transition cursor-pointer">
                 <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                 </svg>
                 <span class="text-red-800 font-medium">{{ $lowStockCount }} Low Stock</span>
-            </div>
+            </a>
             @endif
             <a href="{{ route('inventory.template') }}" class="border border-blue-600 text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

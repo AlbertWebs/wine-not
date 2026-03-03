@@ -112,6 +112,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/sales', [\App\Http\Controllers\SaleController::class, 'index'])->name('sales.index');
     Route::post('/sales', [\App\Http\Controllers\SaleController::class, 'store'])->name('sales.store');
     Route::get('/sales/{sale}', [\App\Http\Controllers\SaleController::class, 'show'])->name('sales.show');
+    Route::get('/sales/{sale}/edit', [\App\Http\Controllers\SaleController::class, 'edit'])->name('sales.edit');
+    Route::put('/sales/{sale}', [\App\Http\Controllers\SaleController::class, 'update'])->name('sales.update');
     Route::get('/sales/{sale}/print', [\App\Http\Controllers\SaleController::class, 'print'])->name('sales.print');
 
     // Next Orders (Backorder requests)
