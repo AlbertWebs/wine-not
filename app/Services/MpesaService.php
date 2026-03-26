@@ -9,6 +9,16 @@ use Illuminate\Support\Facades\DB;
 
 class MpesaService
 {
+    private function maskSensitive(array $payload): array
+    {
+        $masked = $payload;
+        foreach (['Password', 'SecurityCredential', 'access_token'] as $key) {
+            if (isset($masked[$key])) {
+                $masked[$key] = '***';
+            }
+        }
+        return $masked;
+    }
     /**
      * Get M-Pesa configuration (settings table overrides .env when set)
      */
@@ -258,6 +268,14 @@ class MpesaService
                 ];
             }
 
+            Log::error('M-Pesa STK Push API Error', [
+                'url' => $url,
+                'status' => $response->status(),
+                'payload' => $this->maskSensitive($payload),
+                'response' => $responseData,
+                'raw_body' => $response->body(),
+            ]);
+
             throw new \Exception($responseData['errorMessage'] ?? $responseData['ResponseDescription'] ?? 'Failed to initiate STK Push');
 
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
@@ -269,7 +287,7 @@ class MpesaService
         } catch (\Exception $e) {
             Log::error('M-Pesa STK Push Error', [
                 'error' => $e->getMessage(),
-                'payload' => $payload,
+                'payload' => $this->maskSensitive($payload),
             ]);
             throw $e;
         }
@@ -310,6 +328,15 @@ class MpesaService
             $responseData = $response->json();
 
             if ($response->successful()) {
+                if (($responseData['ResultCode'] ?? null) !== null && (int) $responseData['ResultCode'] !== 0 && (int) $responseData['ResultCode'] !== 1032) {
+                    Log::warning('M-Pesa STK Query Non-Success Result', [
+                        'url' => $url,
+                        'status' => $response->status(),
+                        'payload' => $this->maskSensitive($payload),
+                        'response' => $responseData,
+                        'raw_body' => $response->body(),
+                    ]);
+                }
                 return [
                     'success' => true,
                     'result_code' => $responseData['ResultCode'] ?? null,
@@ -319,6 +346,14 @@ class MpesaService
                     'data' => $responseData,
                 ];
             }
+
+            Log::error('M-Pesa STK Query API Error', [
+                'url' => $url,
+                'status' => $response->status(),
+                'payload' => $this->maskSensitive($payload),
+                'response' => $responseData,
+                'raw_body' => $response->body(),
+            ]);
 
             throw new \Exception($responseData['errorMessage'] ?? 'Failed to query STK Push status');
 
@@ -366,11 +401,28 @@ class MpesaService
             $responseData = $response->json();
 
             if ($response->successful()) {
+                if (($responseData['ResponseCode'] ?? null) !== null && (int) $responseData['ResponseCode'] !== 0) {
+                    Log::warning('M-Pesa C2B Register Non-Success Result', [
+                        'url' => $url,
+                        'status' => $response->status(),
+                        'payload' => $this->maskSensitive($payload),
+                        'response' => $responseData,
+                        'raw_body' => $response->body(),
+                    ]);
+                }
                 return [
                     'success' => true,
                     'data' => $responseData,
                 ];
             }
+
+            Log::error('M-Pesa C2B Register API Error', [
+                'url' => $url,
+                'status' => $response->status(),
+                'payload' => $this->maskSensitive($payload),
+                'response' => $responseData,
+                'raw_body' => $response->body(),
+            ]);
 
             throw new \Exception($responseData['errorMessage'] ?? $responseData['ResponseDescription'] ?? 'Failed to register C2B URLs');
         } catch (\Illuminate\Http\Client\ConnectionException $e) {

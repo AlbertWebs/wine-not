@@ -134,6 +134,7 @@ class MpesaController extends Controller
                         'checkout_request_id' => $checkoutRequestID,
                         'result_code' => $resultCode,
                         'result_desc' => $resultDesc,
+                        'callback_payload' => $callback,
                     ]);
 
                     return response()->json([
