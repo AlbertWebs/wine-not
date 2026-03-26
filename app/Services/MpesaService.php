@@ -248,14 +248,7 @@ class MpesaService
         ];
 
         try {
-            $response = Http::timeout($config['timeout'])
-                ->withToken($accessToken)
-                ->withHeaders([
-                    'Content-Type' => 'application/json',
-                ])
-                ->post($url, $payload);
-
-            $responseData = $response->json();
+            [$response, $responseData] = $this->sendStkPushRequest($url, $accessToken, $config['timeout'], $payload);
 
             if ($response->successful() && isset($responseData['ResponseCode']) && $responseData['ResponseCode'] == 0) {
                 return [
@@ -266,6 +259,36 @@ class MpesaService
                     'response_code' => $responseData['ResponseCode'],
                     'response_description' => $responseData['ResponseDescription'] ?? null,
                 ];
+            }
+
+            // Auto-retry once with alternate transaction type for common 2029 mismatch issues.
+            $resultCode = (string) ($responseData['ResultCode'] ?? '');
+            if ($resultCode === '2029') {
+                $altType = $payload['TransactionType'] === 'CustomerPayBillOnline'
+                    ? 'CustomerBuyGoodsOnline'
+                    : 'CustomerPayBillOnline';
+
+                $retryPayload = $payload;
+                $retryPayload['TransactionType'] = $altType;
+
+                Log::warning('M-Pesa STK Push Retrying With Alternate TransactionType', [
+                    'original_transaction_type' => $payload['TransactionType'],
+                    'retry_transaction_type' => $altType,
+                    'result_code' => $resultCode,
+                    'result_desc' => $responseData['ResultDesc'] ?? null,
+                ]);
+
+                [$retryResponse, $retryData] = $this->sendStkPushRequest($url, $accessToken, $config['timeout'], $retryPayload);
+                if ($retryResponse->successful() && isset($retryData['ResponseCode']) && $retryData['ResponseCode'] == 0) {
+                    return [
+                        'success' => true,
+                        'checkout_request_id' => $retryData['CheckoutRequestID'],
+                        'customer_message' => $retryData['CustomerMessage'],
+                        'merchant_request_id' => $retryData['MerchantRequestID'] ?? null,
+                        'response_code' => $retryData['ResponseCode'],
+                        'response_description' => $retryData['ResponseDescription'] ?? null,
+                    ];
+                }
             }
 
             Log::error('M-Pesa STK Push API Error', [
@@ -291,6 +314,18 @@ class MpesaService
             ]);
             throw $e;
         }
+    }
+
+    private function sendStkPushRequest(string $url, string $accessToken, int $timeout, array $payload): array
+    {
+        $response = Http::timeout($timeout)
+            ->withToken($accessToken)
+            ->withHeaders([
+                'Content-Type' => 'application/json',
+            ])
+            ->post($url, $payload);
+
+        return [$response, $response->json()];
     }
 
     /**
