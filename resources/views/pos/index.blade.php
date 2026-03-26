@@ -2095,6 +2095,13 @@ function posInterface() {
             this.processingSTK = true;
 
             try {
+                let normalizedPhone = (this.mpesaPhoneNumber || '').toString().replace(/[\s\-\(\)]/g, '');
+                if (normalizedPhone.startsWith('0')) {
+                    normalizedPhone = '254' + normalizedPhone.substring(1);
+                } else if (normalizedPhone.startsWith('+254')) {
+                    normalizedPhone = normalizedPhone.substring(1);
+                }
+
                 const response = await fetch('{{ route("mpesa.stkPush") }}', {
                     method: 'POST',
                     headers: {
@@ -2102,7 +2109,7 @@ function posInterface() {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
                     },
                     body: JSON.stringify({
-                        phone_number: this.mpesaPhoneNumber,
+                        phone_number: normalizedPhone,
                         amount: this.cartTotal.total,
                         account_reference: 'POS-' + Date.now(),
                         transaction_desc: 'Payment for ' + this.cart.length + ' item(s)',
@@ -2151,16 +2158,20 @@ function posInterface() {
                     });
 
                     const data = await response.json();
+                    const resultCode = data.result_code ?? data.ResultCode;
+                    const resultDesc = data.result_desc ?? data.ResultDesc;
+                    const payload = data.data || {};
+                    const receiptNo = payload.MpesaReceiptNumber || payload.mpesa_receipt_number || checkoutRequestId;
 
-                    if (data.ResultCode == 0) {
+                    if (resultCode == 0) {
                         // Payment successful
                         clearInterval(pollInterval);
-                        this.transactionReference = data.MpesaReceiptNumber || checkoutRequestId;
-                        this.showNotification('Payment confirmed! Transaction: ' + (data.MpesaReceiptNumber || checkoutRequestId), 'success');
-                    } else if (data.ResultCode && data.ResultCode != 1032) {
+                        this.transactionReference = receiptNo;
+                        this.showNotification('Payment confirmed! Transaction: ' + receiptNo, 'success');
+                    } else if (resultCode && resultCode != 1032) {
                         // Payment failed (1032 is still processing)
                         clearInterval(pollInterval);
-                        this.showNotification('Payment failed: ' + (data.ResultDesc || 'Unknown error'), 'error');
+                        this.showNotification('Payment failed: ' + (resultDesc || 'Unknown error'), 'error');
                     }
 
                     if (attempts >= maxAttempts) {
