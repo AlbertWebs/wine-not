@@ -225,6 +225,11 @@ class MpesaService
         ];
 
         try {
+            Log::info('M-Pesa STK Push Request Payload', [
+                'url' => $url,
+                'payload' => $this->maskSensitive($payload),
+            ]);
+
             [$response, $responseData] = $this->sendStkPushRequest($url, $accessToken, $config['timeout'], $payload);
 
             if ($response->successful() && isset($responseData['ResponseCode']) && $responseData['ResponseCode'] == 0) {
@@ -256,6 +261,10 @@ class MpesaService
                 ]);
 
                 [$retryResponse, $retryData] = $this->sendStkPushRequest($url, $accessToken, $config['timeout'], $retryPayload);
+                Log::info('M-Pesa STK Push Retry Payload', [
+                    'url' => $url,
+                    'payload' => $this->maskSensitive($retryPayload),
+                ]);
                 if ($retryResponse->successful() && isset($retryData['ResponseCode']) && $retryData['ResponseCode'] == 0) {
                     return [
                         'success' => true,
@@ -330,6 +339,11 @@ class MpesaService
         ];
 
         try {
+            Log::info('M-Pesa STK Query Request Payload', [
+                'url' => $url,
+                'payload' => $this->maskSensitive($payload),
+            ]);
+
             $response = Http::timeout($config['timeout'])
                 ->withToken($accessToken)
                 ->withHeaders([
@@ -403,6 +417,11 @@ class MpesaService
         ];
 
         try {
+            Log::info('M-Pesa C2B Register URL Request Payload', [
+                'url' => $url,
+                'payload' => $this->maskSensitive($payload),
+            ]);
+
             $response = Http::timeout($config['timeout'])
                 ->withToken($accessToken)
                 ->withHeaders([
