@@ -5,7 +5,6 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 class MpesaService
 {
@@ -20,7 +19,7 @@ class MpesaService
         return $masked;
     }
     /**
-     * Get M-Pesa configuration (settings table overrides .env when set)
+     * Get M-Pesa configuration from environment/config only.
      */
     public function getConfig(): array
     {
@@ -34,28 +33,6 @@ class MpesaService
             'shortcode' => config('mpesa.shortcode'),
             'environment' => $environment,
         ];
-
-        try {
-            $settings = DB::table('settings')->pluck('value', 'key')->toArray();
-            if (!empty($settings['mpesa_consumer_key'])) {
-                $config['consumer_key'] = $settings['mpesa_consumer_key'];
-            }
-            if (!empty($settings['mpesa_consumer_secret'])) {
-                $config['consumer_secret'] = $settings['mpesa_consumer_secret'];
-            }
-            if (!empty($settings['mpesa_passkey'])) {
-                $config['passkey'] = $settings['mpesa_passkey'];
-            }
-            if (!empty($settings['mpesa_shortcode'])) {
-                $config['shortcode'] = $settings['mpesa_shortcode'];
-            }
-            if (!empty($settings['mpesa_environment'])) {
-                $config['environment'] = $settings['mpesa_environment'];
-                $environment = $config['environment'];
-            }
-        } catch (\Throwable $e) {
-            Log::debug('M-Pesa: could not load settings from DB', ['error' => $e->getMessage()]);
-        }
 
         if (empty($callbackUrl)) {
             try {
