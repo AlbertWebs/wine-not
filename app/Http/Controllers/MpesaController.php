@@ -246,6 +246,45 @@ class MpesaController extends Controller
     }
 
     /**
+     * Register C2B validation and confirmation URLs with Safaricom.
+     */
+    public function registerC2BUrls(Request $request)
+    {
+        $validated = $request->validate([
+            'response_type' => 'nullable|in:Completed,Cancelled',
+        ]);
+
+        try {
+            $validation = $this->mpesaService->validateConfig();
+            if (!$validation['valid']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'M-Pesa configuration incomplete',
+                    'error' => 'Please configure the following in your .env file: ' . implode(', ', $validation['errors']),
+                ], 400);
+            }
+
+            $result = $this->mpesaService->registerC2BUrls($validated['response_type'] ?? 'Completed');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'C2B URLs registered successfully',
+                'data' => $result['data'] ?? $result,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('M-Pesa C2B Register URL Error', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to register C2B URLs',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Simulate Random C2B Transaction (for testing)
      */
     public function simulateC2B(Request $request)

@@ -162,6 +162,7 @@ Route::middleware('auth')->group(function () {
     // M-Pesa (STK Push and status check require authentication)
     Route::post('/mpesa/stk-push', [\App\Http\Controllers\MpesaController::class, 'stkPush'])->name('mpesa.stkPush');
     Route::post('/mpesa/check-status', [\App\Http\Controllers\MpesaController::class, 'checkStatus'])->name('mpesa.checkStatus');
+    Route::post('/mpesa/register-c2b-urls', [\App\Http\Controllers\MpesaController::class, 'registerC2BUrls'])->name('mpesa.registerC2BUrls');
     
     // M-Pesa Testing (Simulate C2B transactions)
     Route::post('/mpesa/simulate-c2b', [\App\Http\Controllers\MpesaController::class, 'simulateC2B'])->name('mpesa.simulateC2B');

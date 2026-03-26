@@ -86,6 +86,8 @@ return [
         'oauth' => '/oauth/v1/generate',
         'stk_push' => '/mpesa/stkpush/v1/processrequest',
         'stk_push_query' => '/mpesa/stkpushquery/v1/query',
+        'c2b_register_url' => '/mpesa/c2b/v1/registerurl',
+        'c2b_simulate' => '/mpesa/c2b/v1/simulate',
     ],
 
     /*
@@ -97,6 +99,8 @@ return [
     |
     */
     'callback_url' => env('MPESA_CALLBACK_URL', null),
+    'confirmation_url' => env('MPESA_CONFIRMATION_URL', null),
+    'validation_url' => env('MPESA_VALIDATION_URL', null),
 
     /*
     |--------------------------------------------------------------------------

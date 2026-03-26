@@ -55,7 +55,26 @@ class MpesaService
             }
         }
 
+        $confirmationUrl = config('mpesa.confirmation_url');
+        $validationUrl = config('mpesa.validation_url');
+        if (empty($confirmationUrl)) {
+            try {
+                $confirmationUrl = route('mpesa.callback');
+            } catch (\Exception $e) {
+                $confirmationUrl = url('/mpesa/callback');
+            }
+        }
+        if (empty($validationUrl)) {
+            try {
+                $validationUrl = route('mpesa.callback');
+            } catch (\Exception $e) {
+                $validationUrl = url('/mpesa/callback');
+            }
+        }
+
         $config['callback_url'] = $callbackUrl;
+        $config['confirmation_url'] = $confirmationUrl;
+        $config['validation_url'] = $validationUrl;
         $config['base_url'] = config("mpesa.base_urls.{$environment}", config('mpesa.base_urls.sandbox'));
         $config['timeout'] = config('mpesa.timeout', 30);
         $config['transaction_type'] = config('mpesa.transaction_type', 'CustomerPayBillOnline');
@@ -312,6 +331,58 @@ class MpesaService
         } catch (\Exception $e) {
             Log::error('M-Pesa Query Error', [
                 'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Register C2B validation and confirmation URLs.
+     *
+     * @throws \Exception
+     */
+    public function registerC2BUrls(?string $responseType = 'Completed'): array
+    {
+        $config = $this->getConfig();
+        $accessToken = $this->getAccessToken();
+        $baseUrl = $this->getBaseUrl();
+        $url = $baseUrl . config('mpesa.endpoints.c2b_register_url');
+
+        $payload = [
+            'ShortCode' => $config['shortcode'],
+            'ResponseType' => $responseType ?: 'Completed',
+            'ConfirmationURL' => $config['confirmation_url'],
+            'ValidationURL' => $config['validation_url'],
+        ];
+
+        try {
+            $response = Http::timeout($config['timeout'])
+                ->withToken($accessToken)
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                ])
+                ->post($url, $payload);
+
+            $responseData = $response->json();
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'data' => $responseData,
+                ];
+            }
+
+            throw new \Exception($responseData['errorMessage'] ?? $responseData['ResponseDescription'] ?? 'Failed to register C2B URLs');
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Log::error('M-Pesa C2B Register URL Connection Error', [
+                'error' => $e->getMessage(),
+                'url' => $url,
+            ]);
+            throw new \Exception('Unable to connect to M-Pesa API. Please check your internet connection.');
+        } catch (\Exception $e) {
+            Log::error('M-Pesa C2B Register URL Error', [
+                'error' => $e->getMessage(),
+                'payload' => $payload,
             ]);
             throw $e;
         }
