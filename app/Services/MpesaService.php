@@ -31,6 +31,7 @@ class MpesaService
             'consumer_secret' => config('mpesa.consumer_secret'),
             'passkey' => config('mpesa.passkey'),
             'shortcode' => config('mpesa.shortcode'),
+            'c2b_shortcode' => config('mpesa.c2b_shortcode'),
             'party_b' => config('mpesa.party_b'),
             'environment' => $environment,
         ];
@@ -412,7 +413,7 @@ class MpesaService
         $url = $baseUrl . config('mpesa.endpoints.c2b_register_url');
 
         $payload = [
-            'ShortCode' => $config['shortcode'],
+            'ShortCode' => $config['c2b_shortcode'] ?: $config['shortcode'],
             'ResponseType' => $responseType ?: 'Completed',
             'ConfirmationURL' => $config['confirmation_url'],
             'ValidationURL' => $config['validation_url'],

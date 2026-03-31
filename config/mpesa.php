@@ -50,6 +50,7 @@ return [
     |
     */
     'shortcode' => env('MPESA_SHORTCODE', ''),
+    'c2b_shortcode' => env('MPESA_C2B_SHORTCODE', null),
     'party_b' => env('MPESA_PARTY_B', null),
 
     /*
