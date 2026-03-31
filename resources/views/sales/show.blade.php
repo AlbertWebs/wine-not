@@ -132,7 +132,7 @@
         @endif
 
         <!-- eTIMS Information -->
-        @if($sale->generate_etims_receipt)
+        @if(false && $sale->generate_etims_receipt)
         <div class="mt-6 pt-6 border-t">
             <h3 class="text-sm font-semibold text-gray-900 mb-3">eTIMS Information</h3>
             @if($sale->etims_verified)

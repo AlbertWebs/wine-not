@@ -479,27 +479,7 @@
                                     </div>
                                 </div>
 
-                                <!-- eTIMS Receipt Checkbox -->
-                                <div class="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4">
-                                    <label class="flex items-center gap-3 cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
-                                            x-model="generateEtimsReceipt"
-                                            @change="calculateTotal()"
-                                            class="w-5 h-5 text-yellow-600 border-2 border-yellow-400 rounded focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
-                                        >
-                                        <div class="flex-1">
-                                            <span class="font-semibold text-yellow-900">Generate eTIMS Receipt</span>
-                                            <p class="text-xs text-yellow-700 mt-1">Apply 16% VAT to all items for KRA compliance</p>
-                                        </div>
-                                    </label>
-                                    <div x-show="generateEtimsReceipt && cartTotal.vat > 0" class="mt-3 pt-3 border-t border-yellow-300">
-                                        <div class="flex justify-between text-sm">
-                                            <span class="text-yellow-800 font-medium">VAT (16%):</span>
-                                            <span class="text-yellow-900 font-bold" x-text="'KES ' + formatPrice(cartTotal.vat)"></span>
-                                        </div>
-                                    </div>
-                                </div>
+                                <!-- eTIMS section hidden -->
 
                                 <div class="space-y-3">
                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -590,7 +570,7 @@
                                                 <button 
                                                     type="button"
                                                     @click="initiateSTKPush()"
-                                                    :disabled="!mpesaPhoneNumber || cartTotal.total <= 0 || processingSTK || !!selectedPendingPayment"
+                                                    :disabled="!mpesaPhoneNumber || cartTotal.total <= 0 || processingSTK || checkingSTKStatus || !!selectedPendingPayment"
                                                     class="w-full py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white rounded-lg font-bold transition transform hover:scale-105 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:transform-none text-sm flex items-center justify-center gap-2 shadow-md"
                                                 >
                                                     <span x-show="!processingSTK">📱 Initiate STK Push</span>
@@ -602,6 +582,10 @@
                                                         Processing...
                                                     </span>
                                                 </button>
+                                                <div x-show="checkingSTKStatus" class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+                                                    <div class="font-semibold">Waiting for M-Pesa PIN confirmation...</div>
+                                                    <div class="mt-1" x-text="stkStatusMessage || 'Please check your phone, enter PIN, and complete payment.'"></div>
+                                                </div>
                                                 <input 
                                                     type="text" 
                                                     x-model="transactionReference"
@@ -1164,6 +1148,8 @@ function posInterface() {
         mpesaPhoneNumber: '',
         transactionReference: '',
         processingSTK: false,
+        checkingSTKStatus: false,
+        stkStatusMessage: '',
         discount: 0,
         processing: false,
         showCartModal: false,
@@ -1834,6 +1820,8 @@ function posInterface() {
             this.useSTKPush = false;
             this.mpesaPhoneNumber = '';
             this.transactionReference = '';
+            this.checkingSTKStatus = false;
+            this.stkStatusMessage = '';
             this.selectedPendingPayment = null;
             this.pendingPaymentSearch = '';
             this.discount = 0;
@@ -1921,7 +1909,7 @@ function posInterface() {
                         tax: this.cartTotal.vat,
                         discount: this.cartTotal.discount,
                         total_amount: this.cartTotal.total,
-                        generate_etims_receipt: this.generateEtimsReceipt,
+                        generate_etims_receipt: false,
                     }),
                 });
 
@@ -2093,6 +2081,8 @@ function posInterface() {
             }
 
             this.processingSTK = true;
+            this.checkingSTKStatus = false;
+            this.stkStatusMessage = '';
 
             try {
                 let normalizedPhone = (this.mpesaPhoneNumber || '').toString().replace(/[\s\-\(\)]/g, '');
@@ -2121,6 +2111,8 @@ function posInterface() {
                 if (data.success) {
                     this.transactionReference = data.checkout_request_id;
                     this.showNotification(data.customer_message || 'STK Push initiated. Please check your phone.', 'success');
+                    this.checkingSTKStatus = true;
+                    this.stkStatusMessage = 'Prompt sent. Waiting for customer PIN entry on phone ending ' + (normalizedPhone.slice(-4) || '....') + '.';
                     
                     // Poll for payment status
                     this.checkPaymentStatus(data.checkout_request_id);
@@ -2166,17 +2158,23 @@ function posInterface() {
                     if (resultCode == 0) {
                         // Payment successful
                         clearInterval(pollInterval);
+                        this.checkingSTKStatus = false;
+                        this.stkStatusMessage = '';
                         this.transactionReference = receiptNo;
                         this.showNotification('Payment confirmed! Transaction: ' + receiptNo, 'success');
+                    } else if (resultCode == 1032) {
+                        this.stkStatusMessage = 'Still waiting for PIN/approval on customer phone...';
                     } else if (resultCode && resultCode != 1032) {
                         // Payment failed (1032 is still processing)
                         clearInterval(pollInterval);
+                        this.checkingSTKStatus = false;
                         this.showNotification('Payment failed: ' + (resultDesc || 'Unknown error'), 'error');
                     }
 
                     if (attempts >= maxAttempts) {
                         clearInterval(pollInterval);
-                        this.showNotification('Payment confirmation timeout. Please verify payment manually.', 'warning');
+                        this.checkingSTKStatus = false;
+                        this.showNotification('Still awaiting confirmation. If customer entered PIN, wait a bit and then check status again or use C2B pending payments.', 'warning');
                     }
                 } catch (error) {
                     console.error('Status check error:', error);

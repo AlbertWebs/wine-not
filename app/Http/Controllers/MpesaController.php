@@ -247,6 +247,16 @@ class MpesaController extends Controller
     }
 
     /**
+     * Show C2B URL registration page.
+     */
+    public function c2bRegistration()
+    {
+        return view('mpesa.c2b-registration', [
+            'config' => $this->mpesaService->getConfig(),
+        ]);
+    }
+
+    /**
      * Register C2B validation and confirmation URLs with Safaricom.
      */
     public function registerC2BUrls(Request $request)
@@ -267,21 +277,31 @@ class MpesaController extends Controller
 
             $result = $this->mpesaService->registerC2BUrls($validated['response_type'] ?? 'Completed');
 
-            return response()->json([
-                'success' => true,
-                'message' => 'C2B URLs registered successfully',
-                'data' => $result['data'] ?? $result,
-            ]);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'C2B URLs registered successfully',
+                    'data' => $result['data'] ?? $result,
+                ]);
+            }
+
+            return redirect()->route('mpesa.c2b-registration')
+                ->with('success', 'C2B URLs registered successfully with Safaricom.');
         } catch (\Exception $e) {
             Log::error('M-Pesa C2B Register URL Error', [
                 'error' => $e->getMessage(),
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to register C2B URLs',
-                'error' => $e->getMessage(),
-            ], 500);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to register C2B URLs',
+                    'error' => $e->getMessage(),
+                ], 500);
+            }
+
+            return redirect()->route('mpesa.c2b-registration')
+                ->with('error', 'Failed to register C2B URLs: ' . $e->getMessage());
         }
     }
 

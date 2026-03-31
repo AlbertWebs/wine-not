@@ -276,7 +276,7 @@
         @endif
 
         <!-- eTIMS Information -->
-        @if($sale->generate_etims_receipt)
+        @if(false && $sale->generate_etims_receipt)
         <div class="payment-info" style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed #000;">
             <div class="label" style="margin-bottom: 4px;">eTIMS Information:</div>
             @if($sale->etims_verified)

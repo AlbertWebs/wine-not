@@ -209,6 +209,15 @@
                                 </svg>
                                 <span x-show="!sidebarCollapsed">Pending Payments</span>
                             </a>
+                            <a href="{{ route('mpesa.c2b-registration') }}" 
+                               class="flex items-center {{ request()->routeIs('mpesa.c2b-registration') ? 'bg-white/20 text-white' : 'text-wine-100 hover:bg-white/10' }} px-3 py-2 rounded-lg text-sm transition"
+                               title="C2B URL Registration"
+                            >
+                                <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 010 5.656m-3.656-5.656a4 4 0 000 5.656m-4.95 1.414a8 8 0 0111.314-11.314M6.343 17.657a8 8 0 0111.314-11.314"></path>
+                                </svg>
+                                <span x-show="!sidebarCollapsed">C2B URL Registration</span>
+                            </a>
                             <a href="{{ route('next-orders.index') }}" 
                                class="flex items-center {{ request()->routeIs('next-orders.*') ? 'bg-white/20 text-white' : 'text-wine-100 hover:bg-white/10' }} px-3 py-2 rounded-lg text-sm transition"
                                title="Next Orders"
