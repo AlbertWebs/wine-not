@@ -407,7 +407,8 @@ class MpesaService
     {
         $config = $this->getConfig();
         $accessToken = $this->getAccessToken();
-        $baseUrl = $this->getBaseUrl();
+        // Always use live endpoint for URL registration as requested.
+        $baseUrl = config('mpesa.base_urls.production', 'https://api.safaricom.co.ke');
         $url = $baseUrl . config('mpesa.endpoints.c2b_register_url');
 
         $payload = [
