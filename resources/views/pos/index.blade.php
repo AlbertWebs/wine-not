@@ -2154,6 +2154,8 @@ function posInterface() {
                     const resultDesc = data.result_desc ?? data.ResultDesc;
                     const payload = data.data || {};
                     const receiptNo = payload.MpesaReceiptNumber || payload.mpesa_receipt_number || checkoutRequestId;
+                    const normalizedDesc = (resultDesc || '').toString().toLowerCase();
+                    const stillProcessing = resultCode == 1032 || normalizedDesc.includes('still under processing') || normalizedDesc.includes('request is being processed');
 
                     if (resultCode == 0) {
                         // Payment successful
@@ -2162,7 +2164,7 @@ function posInterface() {
                         this.stkStatusMessage = '';
                         this.transactionReference = receiptNo;
                         this.showNotification('Payment confirmed! Transaction: ' + receiptNo, 'success');
-                    } else if (resultCode == 1032) {
+                    } else if (stillProcessing) {
                         this.stkStatusMessage = 'Still waiting for PIN/approval on customer phone...';
                     } else if (resultCode && resultCode != 1032) {
                         // Payment failed (1032 is still processing)
