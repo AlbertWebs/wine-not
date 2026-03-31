@@ -72,6 +72,10 @@ Route::middleware('auth')->group(function () {
         ->name('inventory.template');
     Route::get('/inventory/template/simple', [InventoryController::class, 'downloadSimpleTemplate'])
         ->name('inventory.template.simple');
+    Route::get('/inventory/pricelist/excel', [InventoryController::class, 'exportPriceListExcel'])
+        ->name('inventory.pricelist.excel');
+    Route::get('/inventory/pricelist/pdf', [InventoryController::class, 'exportPriceListPdf'])
+        ->name('inventory.pricelist.pdf');
     Route::get('/inventory/check-unique', [InventoryController::class, 'checkUnique'])
         ->name('inventory.checkUnique');
     Route::resource('inventory', InventoryController::class);

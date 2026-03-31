@@ -8,11 +8,14 @@ use App\Models\Brand;
 use App\Imports\InventoryImport;
 use App\Exports\InventoryTemplateExport;
 use App\Exports\InventorySimpleTemplateExport;
+use App\Exports\PriceListExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Validation\Rule;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 class InventoryController extends Controller
 {
@@ -267,6 +270,41 @@ class InventoryController extends Controller
     {
         $fileName = 'inventory-simple-template-' . now()->format('Y-m-d') . '.xlsx';
         return Excel::download(new InventorySimpleTemplateExport(), $fileName);
+    }
+
+    public function exportPriceListExcel()
+    {
+        $items = Inventory::with(['category', 'brand'])
+            ->orderBy('name')
+            ->get();
+
+        $fileName = 'wine-not-price-list-' . now()->format('Y-m-d') . '.xlsx';
+
+        return Excel::download(new PriceListExport($items), $fileName);
+    }
+
+    public function exportPriceListPdf()
+    {
+        $items = Inventory::with(['category', 'brand'])
+            ->orderBy('name')
+            ->get();
+
+        $html = view('inventory.exports.pricelist-pdf', [
+            'items' => $items,
+            'date' => now()->format('Y-m-d H:i:s'),
+        ])->render();
+
+        $options = new Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        return response()->streamDownload(function () use ($dompdf) {
+            echo $dompdf->output();
+        }, 'wine-not-price-list-' . now()->format('Y-m-d') . '.pdf');
     }
 
     public function checkUnique(Request $request)
