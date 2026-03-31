@@ -85,7 +85,7 @@ class MpesaService
      * 
      * @throws \Exception
      */
-    public function getAccessToken(): string
+    public function getAccessToken(bool $forceRefresh = false): string
     {
         $config = $this->getConfig();
         
@@ -100,6 +100,9 @@ class MpesaService
 
         // Try to get from cache first (tokens expire after 1 hour)
         $cacheKey = 'mpesa_access_token_' . $config['environment'];
+        if ($forceRefresh) {
+            Cache::forget($cacheKey);
+        }
         $cachedToken = Cache::get($cacheKey);
         
         if ($cachedToken) {
@@ -407,7 +410,8 @@ class MpesaService
     public function registerC2BUrls(?string $responseType = 'Completed'): array
     {
         $config = $this->getConfig();
-        $accessToken = $this->getAccessToken();
+        // Always use a fresh token for C2B URL registration to avoid stale-token rejects.
+        $accessToken = $this->getAccessToken(true);
         // Use the same environment/base URL path as STK Push.
         $baseUrl = $this->getBaseUrl();
         $url = $baseUrl . config('mpesa.endpoints.c2b_register_url');
@@ -448,6 +452,27 @@ class MpesaService
                     'success' => true,
                     'data' => $responseData,
                 ];
+            }
+
+            // Safaricom may reject stale tokens even when locally cached as valid.
+            $responseText = strtolower((string) ($responseData['errorMessage'] ?? $responseData['error_description'] ?? $response->body()));
+            if (str_contains($responseText, 'invalid access token')) {
+                Log::warning('M-Pesa C2B Register Invalid Token, Retrying With Fresh Token');
+                $freshToken = $this->getAccessToken(true);
+                $retryResponse = Http::timeout($config['timeout'])
+                    ->withToken($freshToken)
+                    ->withHeaders([
+                        'Content-Type' => 'application/json',
+                    ])
+                    ->post($url, $payload);
+                $retryData = $retryResponse->json();
+
+                if ($retryResponse->successful() && (($retryData['ResponseCode'] ?? null) === null || (int) $retryData['ResponseCode'] === 0)) {
+                    return [
+                        'success' => true,
+                        'data' => $retryData,
+                    ];
+                }
             }
 
             Log::error('M-Pesa C2B Register API Error', [

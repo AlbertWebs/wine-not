@@ -278,7 +278,7 @@ class MpesaController extends Controller
             if ($request->expectsJson()) {
                 // Step 1: token generation
                 try {
-                    $this->mpesaService->getAccessToken();
+                    $this->mpesaService->getAccessToken(true);
                 } catch (\Exception $tokenError) {
                     return response()->json([
                         'success' => false,
