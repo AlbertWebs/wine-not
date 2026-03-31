@@ -275,15 +275,40 @@ class MpesaController extends Controller
                 ], 400);
             }
 
-            $result = $this->mpesaService->registerC2BUrls($validated['response_type'] ?? 'Completed');
-
             if ($request->expectsJson()) {
+                // Step 1: token generation
+                try {
+                    $this->mpesaService->getAccessToken();
+                } catch (\Exception $tokenError) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Failed at token generation step.',
+                        'phase' => 'token_generation',
+                        'error' => $tokenError->getMessage(),
+                    ], 500);
+                }
+
+                // Step 2: register URLs
+                try {
+                    $result = $this->mpesaService->registerC2BUrls($validated['response_type'] ?? 'Completed');
+                } catch (\Exception $registerError) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Failed at URL registration step.',
+                        'phase' => 'url_registration',
+                        'error' => $registerError->getMessage(),
+                    ], 500);
+                }
+
                 return response()->json([
                     'success' => true,
                     'message' => 'C2B URLs registered successfully',
+                    'phase' => 'completed',
                     'data' => $result['data'] ?? $result,
                 ]);
             }
+
+            $result = $this->mpesaService->registerC2BUrls($validated['response_type'] ?? 'Completed');
 
             return redirect()->route('mpesa.c2b-registration')
                 ->with('success', 'C2B URLs registered successfully with Safaricom.');
