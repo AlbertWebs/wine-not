@@ -2164,6 +2164,13 @@ function posInterface() {
                         this.stkStatusMessage = '';
                         this.transactionReference = receiptNo;
                         this.showNotification('Payment confirmed! Transaction: ' + receiptNo, 'success');
+
+                        // Auto-complete sale once payment is confirmed.
+                        if (this.paymentMethod === 'M-Pesa' && !this.processing && this.cart.length > 0) {
+                            setTimeout(() => {
+                                this.checkout();
+                            }, 200);
+                        }
                     } else if (stillProcessing) {
                         this.stkStatusMessage = 'Still waiting for PIN/approval on customer phone...';
                     } else if (resultCode && resultCode != 1032) {
