@@ -407,8 +407,8 @@ class MpesaService
     {
         $config = $this->getConfig();
         $accessToken = $this->getAccessToken();
-        // Always use live endpoint for URL registration as requested.
-        $baseUrl = config('mpesa.base_urls.production', 'https://api.safaricom.co.ke');
+        // Use the same environment/base URL path as STK Push.
+        $baseUrl = $this->getBaseUrl();
         $url = $baseUrl . config('mpesa.endpoints.c2b_register_url');
 
         $payload = [
