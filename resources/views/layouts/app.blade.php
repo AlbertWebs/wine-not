@@ -87,6 +87,24 @@
                             </svg>
                             <span x-show="!sidebarCollapsed">Inventory</span>
                         </a>
+                        <a href="{{ route('inventory.pricelist.excel') }}" 
+                           class="flex items-center text-wine-100 hover:bg-white/10 px-3 py-2 rounded-lg text-sm transition"
+                           title="Price List Excel"
+                        >
+                            <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"></path>
+                            </svg>
+                            <span x-show="!sidebarCollapsed">Price List Excel</span>
+                        </a>
+                        <a href="{{ route('inventory.pricelist.pdf') }}" 
+                           class="flex items-center text-wine-100 hover:bg-white/10 px-3 py-2 rounded-lg text-sm transition"
+                           title="Price List PDF"
+                        >
+                            <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"></path>
+                            </svg>
+                            <span x-show="!sidebarCollapsed">Price List PDF</span>
+                        </a>
                         <a href="{{ route('barcodes.index') }}" 
                            class="flex items-center {{ request()->routeIs('barcodes.*') ? 'bg-white/20 text-white' : 'text-wine-100 hover:bg-white/10' }} px-3 py-2 rounded-lg text-sm transition"
                            title="Barcodes"
