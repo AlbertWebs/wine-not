@@ -31,6 +31,7 @@ class MpesaService
             'consumer_secret' => config('mpesa.consumer_secret'),
             'passkey' => config('mpesa.passkey'),
             'shortcode' => config('mpesa.shortcode'),
+            'party_b' => config('mpesa.party_b'),
             'environment' => $environment,
         ];
 
@@ -217,7 +218,7 @@ class MpesaService
             'TransactionType' => $config['transaction_type'],
             'Amount' => (int) $amount,
             'PartyA' => $phone,
-            'PartyB' => $config['shortcode'],
+            'PartyB' => $config['party_b'] ?: $config['shortcode'],
             'PhoneNumber' => $phone,
             'CallBackURL' => $config['callback_url'],
             'AccountReference' => $accountReference,
